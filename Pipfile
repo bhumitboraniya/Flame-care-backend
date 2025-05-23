@@ -17,4 +17,4 @@ gunicorn = "==21.2.0"
 [dev-packages]
 
 [requires]
-python_version = "3.9.6"
+python_version = "3.7"
