@@ -92,3 +92,85 @@ class FluidCalculator:
             'hourly_rate_first_8hr': hourly_rate_first_8hr,
             'hourly_rate_subsequent_16hr': hourly_rate_subsequent_16hr
         }
+
+
+def get_fluid_requirements_simple(weight_kg, tbsa_percentage, delayed_hours=0, is_adult=True):
+    """
+    Calculate burn fluid requirements using Parkland formula
+    
+    Parameters:
+    weight_kg (float): Patient weight in kg
+    tbsa_percentage (float): Total burn surface area percentage (0-100)
+    delayed_hours (float): Hours of delay before treatment starts
+    is_adult (bool): True for adult, False for child
+    
+    Returns:
+    dict: Essential fluid requirements
+    {
+        'total_ml': float,
+        'first_8h_ml': float,
+        'next_16h_ml': float,
+        'first_8h_rate': float,
+        'next_16h_rate': float
+    }
+    """
+    
+    try:
+        # Convert and validate inputs
+        weight = float(weight_kg)
+        tbsa = float(tbsa_percentage)
+        delay = float(delayed_hours)
+        
+        # Validation
+        if weight <= 0 or tbsa < 0 or tbsa > 100 or delay < 0:
+            return {
+                'total_ml': 0,
+                'first_8h_ml': 0,
+                'next_16h_ml': 0,
+                'first_8h_rate': 0,
+                'next_16h_rate': 0,
+                'error': 'Invalid input parameters'
+            }
+        
+        # Parkland formula with pediatric adjustment
+        # Standard: 4ml/kg/%TBSA, Pediatric: 4.4ml/kg/%TBSA (10% increase)
+        multiplier = 4.4 if not is_adult else 4.0
+        total_ml = multiplier * weight * tbsa
+        
+        # Standard distribution: 50% in first 8 hours, 50% in next 16 hours
+        first_8h = total_ml / 2
+        next_16h = total_ml / 2
+        
+        # Adjust for delayed resuscitation
+        if delay > 0:
+            if delay <= 8:
+                # Compress first period
+                remaining_hours = max(8 - delay, 0.1)
+                first_8h_rate = first_8h / remaining_hours if remaining_hours > 0 else 0
+            else:
+                # Delay exceeds 8 hours - all fluid in remaining time
+                first_8h = 0
+                next_16h = total_ml
+                first_8h_rate = 0
+        else:
+            first_8h_rate = first_8h / 8
+        
+        next_16h_rate = next_16h / 16
+        
+        return {
+            'total_ml': round(total_ml, 1),
+            'first_8h_ml': round(first_8h, 1),
+            'next_16h_ml': round(next_16h, 1),
+            'first_8h_rate': round(first_8h_rate, 1),
+            'next_16h_rate': round(next_16h_rate, 1)
+        }
+        
+    except (ValueError, TypeError):
+        return {
+            'total_ml': 0,
+            'first_8h_ml': 0,
+            'next_16h_ml': 0,
+            'first_8h_rate': 0,
+            'next_16h_rate': 0,
+            'error': 'Invalid input format'
+        }
