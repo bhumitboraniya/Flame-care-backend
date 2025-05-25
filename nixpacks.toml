@@ -1,5 +1,5 @@
 # nixpacks.toml
 
 [start]
-providers = ["go"]
+providers = ["python"]
 cmd = "gunicorn app:app"
