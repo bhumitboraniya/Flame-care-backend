@@ -1,4 +1,59 @@
+# Virtual environments
 venv/
 env/
 .env/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Flask
+instance/
+.webassets-cache
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# PyTorch models
+*.pth
+*.pt
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+
+# Static uploads (if you don't want to commit them)
+static/uploads/*
+!static/uploads/.gitkeep
+
+# Vercel
 .vercel
