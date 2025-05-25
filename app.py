@@ -12,6 +12,10 @@ import matplotlib.pyplot as plt
 from PIL import Image
 import io
 import base64
+import threading
+import time
+import random
+import requests
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 
@@ -21,6 +25,38 @@ from models.calculators import BurnAreaCalculator, FluidCalculator, get_fluid_re
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
+
+# Keep-alive functionality for Render deployment
+KEEP_ALIVE_ENABLED = True;
+
+def keep_alive():
+    """
+    Function to keep the service alive by making periodic requests
+    """
+    while KEEP_ALIVE_ENABLED:
+        try:
+            # Random delay between 30 seconds to 8 minutes (480 seconds)
+            # This ensures the service stays active but doesn't hammer the server
+            delay = random.randint(30, 480)
+            time.sleep(delay)
+            
+            # Make a simple GET request to the health endpoint
+            response = requests.get(f"https://flame-care-backend.onrender.com/health", timeout=10)
+            if response.status_code == 200:
+                print(f"Keep-alive ping successful at {time.strftime('%Y-%m-%d %H:%M:%S')}")
+            else:
+                print(f"Keep-alive ping failed with status {response.status_code}")
+                
+        except requests.exceptions.RequestException as e:
+            print(f"Keep-alive ping failed: {str(e)}")
+        except Exception as e:
+            print(f"Keep-alive error: {str(e)}")
+
+# Start keep-alive thread if enabled
+if KEEP_ALIVE_ENABLED :
+    keep_alive_thread = threading.Thread(target=keep_alive, daemon=True)
+    keep_alive_thread.start()
+    print("Keep-alive service started")
 
 # Setup static folder for uploads if needed
 UPLOAD_FOLDER = 'static/uploads'
@@ -147,6 +183,15 @@ def index():
             '/api/test-fluid': 'GET - Test fluid calculator with sample data'
         }
     })
+
+@app.route('/health', methods=['GET'])
+def health_check():
+    """Health check endpoint for keep-alive monitoring"""
+    return jsonify({
+        'status': 'healthy',
+        'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
+        'message': 'Service is running'
+    }), 200
 
 @app.route('/api/test-fluid', methods=['GET'])
 def test_fluid_calculator():
